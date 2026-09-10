@@ -1,0 +1,12 @@
+# Julia
+Manifest.toml
+/deps/deps.jl
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+/docs/build/
+.DS_Store
+
+# results / scratch
+*.log
+/scratch/
