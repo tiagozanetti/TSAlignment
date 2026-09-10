@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "TSAlignment.jl: Goal Programming Time-Series Alignment"
+type: software
+authors:
+  - family-names: Zanetti
+    given-names: Tiago Almeida
+  - family-names: Bartmeyer
+    given-names: Petra Maria
+  - family-names: Jones
+    given-names: Dylan
+version: 0.1.1
+date-released: 2026-09-10
+license: MIT
+repository-code: "https://github.com/tiagozanetti/TSAlignment"
+url: "https://github.com/tiagozanetti/TSAlignment"
