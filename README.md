@@ -127,9 +127,7 @@ only if an optimizer has been registered via `set_optimizer!`.
 
 ## Citation
 
-See `CITATION.bib`. Archive a GitHub release on Zenodo to mint a DOI, then fill the
-placeholders.
-
+See `CITATION.bib`. 
 ## License
 
 MIT — see `LICENSE`.
