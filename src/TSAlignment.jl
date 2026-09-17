@@ -18,7 +18,8 @@ using CSV, DataFrames
 
 include("config.jl")        # parameters (Refs) + set_optimizer!
 include("models.jl")        # egp_solve / rgp_solve / ermcgp_solve + MSOLVE
-include("metrics.jl")       # metrics_from_pairs, count_crossings, monotone_repair, fusion_metrics
+include("metrics.jl")     # metrics_from_pairs, count_crossings, monotone_repair, fusion_metrics
+include("preproc.jl")     # nn_resample, patch_nan, valid_mask, best_lag, preprocess_streams
 include("hierarchical.jl")  # BandedAlignment + solve_recursive
 include("fusion.jl")        # rel_weights, cons_*, weighted_align, fusion_loo
 include("synthetic.jl")     # base_signal, gen_gate_case_meta
@@ -31,7 +32,7 @@ export set_optimizer!, reset_params!
 
 # ---- models & pipeline ----
 export egp_solve, rgp_solve, ermcgp_solve, MSOLVE,
-       solve_recursive, compare_variants, metrics_table
+       solve_recursive, compare_variants, metrics_table, run_pipeline
 
 # ---- metrics ----
 export metrics_from_pairs, count_crossings, count_crossings_pairs,
@@ -39,13 +40,17 @@ export metrics_from_pairs, count_crossings, count_crossings_pairs,
 
 # ---- fusion / consensus ----
 export rel_weights, cons_uniform, cons_weighted,
-       weighted_align, fusion_loo, align_to_consensus
+       weighted_align, fusion_loo, align_to_consensus,
+       reliability_stats, align_and_fuse
 
 # ---- synthetic ----
 export base_signal, gen_gate_case_meta
 
 # ---- visualization ----
 export overlay_pairs, alignment_plot, plot_weights, plot_consensus_overlay
+
+# ---- preprocessing ----
+export nn_resample, patch_nan, valid_mask, best_lag, bad_runs, preprocess_streams
 
 # ---- io ----
 export read_series, read_many

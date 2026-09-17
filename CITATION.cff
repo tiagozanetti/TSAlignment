@@ -9,8 +9,8 @@ authors:
     given-names: Petra Maria
   - family-names: Jones
     given-names: Dylan
-version: 0.1.1
-date-released: 2026-09-10
+version: 0.1.2
+date-released: 2026-09-16
 doi: 10.5281/zenodo.22698627
 license: MIT
 repository-code: "https://github.com/tiagozanetti/TSAlignment"

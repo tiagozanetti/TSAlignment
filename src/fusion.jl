@@ -16,17 +16,21 @@
 # ----------------------------------------------------------------------------------
 
 """
-    rel_weights(train; c=1e-3) -> Vector
+    reliability_stats(train; c=1e-3) -> (sigma, omega)
 
-Reliability weights over co-registered series: build a provisional median consensus,
-take each series' RMS residual to it as σ_k, and set weight ∝ 1/(σ_k² + c), normalized.
+Over co-registered series: build a provisional median consensus, take each series'
+RMS residual to it as sigma_k, and set weight proportional to 1/(sigma_k^2 + c),
+normalized. Returns both the per-series scale sigma_k and the weights omega_k.
 """
-function rel_weights(train; c=1e-3)
-    C = [median(s[i] for s in train) for i in 1:length(train[1])]
+function reliability_stats(train; c=1e-3)
+    C   = [median(s[i] for s in train) for i in 1:length(train[1])]
     sig = [sqrt(mean((s .- C) .^ 2)) for s in train]
-    w = [1.0 / (x^2 + c) for x in sig]
-    w ./ sum(w)
+    w   = [1.0 / (x^2 + c) for x in sig]
+    return sig, w ./ sum(w)
 end
+
+"Reliability weights only (see `reliability_stats` for the (sigma_k, omega_k) pair)."
+rel_weights(train; c=1e-3) = reliability_stats(train; c=c)[2]
 
 "Plain across-series mean (uniform consensus)."
 cons_uniform(train) = vec(mean(hcat(train...), dims = 2))
@@ -173,4 +177,48 @@ function fusion_loo(series::AbstractDict; folds, verbose=true)
         summary[!, col] = round.(summary[!, col], digits = 3)
     end
     return (full = full, summary = summary)
+end
+
+
+"""
+    align_and_fuse(reference, devices; names=nothing, model=:rgp, c=1e-3,
+                   include_reference=true, verbose=true)
+        -> (; consensus, aligned, weights, sigma, names, fit, tempo)
+
+GP consensus over co-registered streams. Each device stream is GP-pairwise-aligned
+onto `reference` with `solve_recursive` (model in :egp/:rgp/:ermcgp), then a single
+reliability-weighted consensus is built over the aligned streams. Assumes inputs
+already share the reference grid (see `preprocess_streams`).
+"""
+function align_and_fuse(reference::Vector{Float64}, devices::Vector{Vector{Float64}};
+                        names=nothing, model=:rgp, c=1e-3,
+                        include_reference=true, verbose=true)
+    S = length(devices)
+    names === nothing && (names = ["dev$(k)" for k in 1:S])
+    aligned = Vector{Vector{Float64}}(); ttotal = 0.0
+    for (k, B) in enumerate(devices)                        # 1) GP pairwise align -> reference
+        av, _, t = align_to_consensus(reference, B; model = model)
+        for i in 2:length(av); isfinite(av[i]) || (av[i] = av[i-1]); end
+        isfinite(av[1]) || (av[1] = B[1])
+        push!(aligned, av); ttotal += t
+        verbose && @printf("aligned %-10s -> reference (%.2fs)\n", names[k], t)
+    end
+    streams = include_reference ? vcat([reference], aligned) : aligned
+    snames  = include_reference ? vcat(["reference"], names) : names
+    sigma, w = reliability_stats(streams; c = c)            # 2) weights + weighted consensus
+    consensus = weighted_consensus(streams, w)
+    fit = Dict{String,NamedTuple}()                         # 3) per-stream fit
+    for s in eachindex(streams)
+        r = abs.(filter(isfinite, streams[s] .- consensus))
+        fit[snames[s]] = (sigma = sigma[s], weight = w[s],
+                          mae = mean(r), rms = sqrt(mean(r .^ 2)))
+    end
+    if verbose
+        println("reliability weights (sigma_k, omega_k):")
+        for s in eachindex(streams)
+            @printf("  %-10s sigma=%.3f  omega=%.3f\n", snames[s], sigma[s], w[s])
+        end
+    end
+    return (consensus = consensus, aligned = aligned, weights = w,
+            sigma = sigma, names = snames, fit = fit, tempo = ttotal)
 end
